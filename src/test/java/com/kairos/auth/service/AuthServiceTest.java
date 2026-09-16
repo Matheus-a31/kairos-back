@@ -49,6 +49,9 @@ class AuthServiceTest {
     @Mock
     private JwtTokenProvider jwtTokenProvider;
 
+    @Mock
+    private com.kairos.project.service.ProjectInvitationService projectInvitationService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -77,6 +80,8 @@ class AuthServiceTest {
         assertEquals("test@example.com", savedUser.getEmail());
         assertEquals("encoded_password", savedUser.getPassword());
         assertEquals(Role.MANAGER, savedUser.getRole()); // Asserção no comportamento atual
+        
+        verify(projectInvitationService, times(1)).processPendingInvitations(savedUser);
     }
 
     @Test

@@ -17,6 +17,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.kairos.project.service.ProjectInvitationService;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -30,6 +32,7 @@ public class AuthService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final ProjectInvitationService projectInvitationService;
 
     @Value("${kairos.jwt.access-expiration}")
     private long jwtExpirationInMs;
@@ -39,12 +42,14 @@ public class AuthService {
 
     public AuthService(AuthenticationManager authenticationManager, UserRepository userRepository,
                        RefreshTokenRepository refreshTokenRepository, PasswordEncoder passwordEncoder,
-                       JwtTokenProvider jwtTokenProvider) {
+                       JwtTokenProvider jwtTokenProvider,
+                       @org.springframework.context.annotation.Lazy ProjectInvitationService projectInvitationService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.projectInvitationService = projectInvitationService;
     }
 
     @Transactional
@@ -61,6 +66,9 @@ public class AuthService {
         );
 
         userRepository.save(user);
+
+        // Accept all pending invitations for this user
+        projectInvitationService.processPendingInvitations(user);
     }
 
     @Transactional
