@@ -57,7 +57,7 @@ class ProjectServiceTest {
         ReflectionTestUtils_setId(currentUser, 1L);
 
         // Mock Security Context
-        when(securityContext.getAuthentication()).thenReturn(authentication);
+        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
     }
 
@@ -76,7 +76,7 @@ class ProjectServiceTest {
         ProjectRequest request = new ProjectRequest("My Project", "Description", LocalDate.now(), LocalDate.now().plusDays(10), ProjectStatus.PLANNING);
         Project project = new Project();
         project.setName(request.name());
-        ProjectResponse response = new ProjectResponse(1L, "My Project", "Description", null, null, ProjectStatus.PLANNING);
+        ProjectResponse response = new ProjectResponse(1L, "My Project", "Description", ProjectStatus.PLANNING, null, null);
 
         when(projectMapper.toEntity(request)).thenReturn(project);
         when(projectRepository.save(any(Project.class))).thenReturn(project);
@@ -94,7 +94,7 @@ class ProjectServiceTest {
         mockCurrentUser();
         Project project = new Project();
         project.setName("Test");
-        ProjectResponse response = new ProjectResponse(1L, "Test", "Desc", null, null, ProjectStatus.PLANNING);
+        ProjectResponse response = new ProjectResponse(1L, "Test", "Desc", ProjectStatus.PLANNING, null, null);
 
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(projectMemberRepository.existsByProjectIdAndUserId(1L, currentUser.getId())).thenReturn(true);
@@ -121,22 +121,22 @@ class ProjectServiceTest {
     void addMember_ShouldAddUser_WhenUserIsNotYetMember() {
         Project project = new Project();
         ReflectionTestUtils_setId(project, 1L);
-        User newMemberUser = new User("New", "new@example.com", "pass", Role.DEVELOPER);
+        User newMemberUser = new User("New", "new@example.com", "pass", Role.MANAGER);
         ReflectionTestUtils_setId(newMemberUser, 2L);
 
-        AddMemberRequest request = new AddMemberRequest("new@example.com", ProjectRole.DEVELOPER);
+        AddMemberRequest request = new AddMemberRequest("new@example.com", ProjectRole.MEMBER);
 
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.of(newMemberUser));
         when(projectMemberRepository.existsByProjectIdAndUserId(1L, 2L)).thenReturn(false);
 
-        com.kairos.project.dto.ProjectMemberResponse memberResponse = new com.kairos.project.dto.ProjectMemberResponse(1L, 2L, "New", "new@example.com", ProjectRole.DEVELOPER);
+        com.kairos.project.dto.ProjectMemberResponse memberResponse = new com.kairos.project.dto.ProjectMemberResponse(1L, 2L, "New", "new@example.com", ProjectRole.MEMBER, java.time.LocalDateTime.now());
         when(projectMemberRepository.save(any(ProjectMember.class))).thenReturn(new ProjectMember());
         when(projectMapper.toMemberResponse(any(ProjectMember.class))).thenReturn(memberResponse);
 
         var result = projectService.addMember(1L, request);
 
         assertNotNull(result);
-        assertEquals("new@example.com", result.email());
+        assertEquals("new@example.com", result.userEmail());
     }
 }

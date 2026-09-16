@@ -55,7 +55,7 @@ class KanbanColumnServiceTest {
         currentUser = new User("Current User", "test@example.com", "pass", Role.MANAGER);
         org.springframework.test.util.ReflectionTestUtils.setField(currentUser, "id", 1L);
 
-        when(securityContext.getAuthentication()).thenReturn(authentication);
+        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
         SecurityContextHolder.setContext(securityContext);
     }
 
@@ -66,11 +66,9 @@ class KanbanColumnServiceTest {
 
     @Test
     void getColumns_ShouldReturnList_WhenProjectExists() {
-        KanbanColumn column = new KanbanColumn();
         Project project = new Project();
         org.springframework.test.util.ReflectionTestUtils.setField(project, "id", 1L);
-        column.setProject(project);
-        column.setName("To Do");
+        KanbanColumn column = new KanbanColumn(project, "To Do", "#FFF", 0, false);
         org.springframework.test.util.ReflectionTestUtils.setField(column, "id", 1L);
 
         when(columnRepository.findByProjectIdOrderByPosition(1L)).thenReturn(List.of(column));

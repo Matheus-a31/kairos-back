@@ -50,6 +50,7 @@ class ProjectControllerTest {
         objectMapper.registerModule(new JavaTimeModule());
 
         mockMvc = MockMvcBuilders.standaloneSetup(projectController)
+                .setCustomArgumentResolvers(new org.springframework.data.web.PageableHandlerMethodArgumentResolver())
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
     }
@@ -57,7 +58,7 @@ class ProjectControllerTest {
     @Test
     void createProject_ShouldReturnCreated() throws Exception {
         ProjectRequest request = new ProjectRequest("Proj", "Desc", LocalDate.now(), LocalDate.now().plusDays(10), ProjectStatus.PLANNING);
-        ProjectResponse response = new ProjectResponse(1L, "Proj", "Desc", LocalDate.now(), LocalDate.now().plusDays(10), ProjectStatus.PLANNING);
+        ProjectResponse response = new ProjectResponse(1L, "Proj", "Desc", ProjectStatus.PLANNING, LocalDate.now(), LocalDate.now().plusDays(10));
 
         when(projectService.createProject(any(ProjectRequest.class))).thenReturn(response);
 
@@ -71,7 +72,7 @@ class ProjectControllerTest {
 
     @Test
     void getProjects_ShouldReturnOk() throws Exception {
-        ProjectResponse response = new ProjectResponse(1L, "Proj", "Desc", LocalDate.now(), LocalDate.now().plusDays(10), ProjectStatus.PLANNING);
+        ProjectResponse response = new ProjectResponse(1L, "Proj", "Desc", ProjectStatus.PLANNING, LocalDate.now(), LocalDate.now().plusDays(10));
         Page<ProjectResponse> page = new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1);
 
         when(projectService.getProjects(any(), any())).thenReturn(page);

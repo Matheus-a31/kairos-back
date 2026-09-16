@@ -81,7 +81,7 @@ class ProjectInvitationServiceTest {
         when(userRepository.findByEmail("new@example.com")).thenReturn(Optional.empty());
         when(invitationRepository.existsByProjectIdAndEmailAndUsedFalse(1L, "new@example.com")).thenReturn(false);
 
-        InvitationRequest request = new InvitationRequest("new@example.com", ProjectRole.DEVELOPER);
+        InvitationRequest request = new InvitationRequest("new@example.com", ProjectRole.MEMBER);
 
         invitationService.createInvitation(1L, request);
 
@@ -92,10 +92,10 @@ class ProjectInvitationServiceTest {
     @Test
     void createInvitation_ShouldThrowException_WhenNotManager() {
         mockCurrentUser();
-        ProjectMember viewerMember = new ProjectMember(new Project(), currentUser, ProjectRole.VIEWER);
+        ProjectMember viewerMember = new ProjectMember(new Project(), currentUser, ProjectRole.MEMBER);
         when(memberRepository.findByProjectIdAndUserId(1L, 1L)).thenReturn(Optional.of(viewerMember));
 
-        InvitationRequest request = new InvitationRequest("new@example.com", ProjectRole.DEVELOPER);
+        InvitationRequest request = new InvitationRequest("new@example.com", ProjectRole.MEMBER);
 
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> invitationService.createInvitation(1L, request));
         assertEquals("Apenas o gerente pode enviar convites", exception.getMessage());
@@ -107,7 +107,7 @@ class ProjectInvitationServiceTest {
         Project project = new Project();
         org.springframework.test.util.ReflectionTestUtils.setField(project, "id", 1L);
         
-        ProjectInvitation invitation = new ProjectInvitation(project, currentUser.getEmail(), "token123", ProjectRole.DEVELOPER);
+        ProjectInvitation invitation = new ProjectInvitation(project, currentUser.getEmail(), "token123", ProjectRole.MEMBER);
 
         when(invitationRepository.findByToken("token123")).thenReturn(Optional.of(invitation));
         when(memberRepository.findByProjectIdAndUserId(1L, 1L)).thenReturn(Optional.empty());
@@ -122,7 +122,7 @@ class ProjectInvitationServiceTest {
     @Test
     void acceptInvitation_ShouldThrowException_WhenExpired() {
         mockCurrentUser();
-        ProjectInvitation invitation = new ProjectInvitation(new Project(), currentUser.getEmail(), "token123", ProjectRole.DEVELOPER);
+        ProjectInvitation invitation = new ProjectInvitation(new Project(), currentUser.getEmail(), "token123", ProjectRole.MEMBER);
         org.springframework.test.util.ReflectionTestUtils.setField(invitation, "expiresAt", LocalDateTime.now().minusDays(1)); // Vencido
 
         when(invitationRepository.findByToken("token123")).thenReturn(Optional.of(invitation));
