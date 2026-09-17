@@ -146,6 +146,28 @@ public class ProjectInvitationService {
         invitation.setUsed(true);
         invitationRepository.save(invitation);
     }
+
+    @Transactional
+    public void processPendingInvitations(User user) {
+        java.util.List<ProjectInvitation> pendingInvitations = invitationRepository.findByEmailAndUsedFalse(user.getEmail());
+        
+        for (ProjectInvitation invitation : pendingInvitations) {
+            if (invitation.getExpiresAt().isAfter(LocalDateTime.now())) {
+                Project project = invitation.getProject();
+                
+                if (memberRepository.findByProjectIdAndUserId(project.getId(), user.getId()).isEmpty()) {
+                    ProjectMember newMember = new ProjectMember();
+                    newMember.setProject(project);
+                    newMember.setUser(user);
+                    newMember.setRole(invitation.getRole());
+                    memberRepository.save(newMember);
+                }
+                
+                invitation.setUsed(true);
+                invitationRepository.save(invitation);
+            }
+        }
+    }
 }
 
 
