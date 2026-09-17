@@ -66,3 +66,7 @@ A estrutura está subdividida em pacotes seguindo um modelo orientado ao domíni
 - \`com.kairos.project\`: Entidades relacionadas ao projeto (projetos, membros e convites).
 - \`com.kairos.task\`: Gerenciamento de tarefas e quadros Kanban (colunas, tags).
 - \`com.kairos.core\`: Classes de serviço globais, tratamento genérico de erros e disparos de e-mail.
+
+## Licença
+
+Este projeto está licenciado sob a [GNU General Public License v3.0] (LICENSE).
