@@ -10,7 +10,8 @@ public record ProjectResponse(
     String description,
     ProjectStatus status,
     LocalDate startDate,
-    LocalDate endDate
+    LocalDate endDate,
+    String backgroundColor
 ) {}
 
 
