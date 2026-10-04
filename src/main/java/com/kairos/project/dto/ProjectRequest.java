@@ -11,7 +11,8 @@ public record ProjectRequest(
     String description,
     LocalDate startDate,
     LocalDate endDate,
-    ProjectStatus status
+    ProjectStatus status,
+    String backgroundColor
 ) {}
 
 
