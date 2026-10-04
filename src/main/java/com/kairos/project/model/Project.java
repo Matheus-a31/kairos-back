@@ -39,6 +39,9 @@ public class Project {
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMember> members = new ArrayList<>();
 
+    @Column(name = "background_color", length = 7)
+    private String backgroundColor;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -85,6 +88,9 @@ public class Project {
 
     public List<ProjectMember> getMembers() { return members; }
     public void setMembers(List<ProjectMember> members) { this.members = members; }
+
+    public String getBackgroundColor() { return backgroundColor; }
+    public void setBackgroundColor(String backgroundColor) { this.backgroundColor = backgroundColor; }
 }
 
 
