@@ -17,6 +17,7 @@ import com.kairos.task.model.TaskPriority;
 import com.kairos.task.model.TaskStatus;
 import com.kairos.task.repository.TaskHistoryRepository;
 import com.kairos.task.repository.TaskRepository;
+import com.kairos.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -58,6 +59,8 @@ class TaskServiceTest {
     private TagRepository tagRepository;
     @Mock
     private TaskMapper taskMapper;
+    @Mock
+    private NotificationService notificationService;
     @Mock
     private SecurityContext securityContext;
     @Mock
