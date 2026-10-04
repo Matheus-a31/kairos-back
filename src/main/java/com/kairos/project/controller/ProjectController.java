@@ -51,6 +51,14 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.updateProject(id, request));
     }
 
+    @PutMapping("/{id}/background")
+    @PreAuthorize("@projectSecurity.isManager(authentication, #id)")
+    public ResponseEntity<ProjectResponse> updateProjectBackground(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, String> request) {
+        return ResponseEntity.ok(projectService.updateProjectBackground(id, request.get("backgroundColor")));
+    }
+
     @DeleteMapping("/{id}")
     @PreAuthorize("@projectSecurity.isManager(authentication, #id)")
     public ResponseEntity<Void> deleteProject(@PathVariable Long id) {

@@ -10,6 +10,8 @@ import com.kairos.auth.model.Role;
 import com.kairos.task.repository.TaskRepository;
 import com.kairos.task.service.TaskService;
 import com.kairos.auth.model.User;
+import com.kairos.notification.model.NotificationType;
+import com.kairos.notification.service.NotificationService;
 
 
 
@@ -33,12 +35,14 @@ public class ProjectService {
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
     private final ProjectMapper projectMapper;
+    private final NotificationService notificationService;
 
-    public ProjectService(ProjectRepository projectRepository, ProjectMemberRepository projectMemberRepository, UserRepository userRepository, ProjectMapper projectMapper) {
+    public ProjectService(ProjectRepository projectRepository, ProjectMemberRepository projectMemberRepository, UserRepository userRepository, ProjectMapper projectMapper, NotificationService notificationService) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
         this.userRepository = userRepository;
         this.projectMapper = projectMapper;
+        this.notificationService = notificationService;
     }
 
     private User getCurrentUser() {
@@ -114,6 +118,23 @@ public class ProjectService {
     }
     
     @Transactional
+    public ProjectResponse updateProjectBackground(Long id, String backgroundColor) {
+        User currentUser = getCurrentUser();
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Projeto não encontrado"));
+                
+        ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(id, currentUser.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Você não tem acesso a este projeto"));
+                
+        if (member.getRole() != ProjectRole.MANAGER) {
+            throw new IllegalArgumentException("Apenas o gerente do projeto pode atualizá-lo");
+        }
+        
+        project.setBackgroundColor(backgroundColor);
+        return projectMapper.toResponse(projectRepository.save(project));
+    }
+    
+    @Transactional
     public void deleteProject(Long id) {
         User currentUser = getCurrentUser();
         Project project = projectRepository.findById(id)
@@ -164,6 +185,8 @@ public class ProjectService {
         
         ProjectMember newMember = new ProjectMember(project, targetUser, request.role());
         newMember = projectMemberRepository.save(newMember);
+        
+        notificationService.createNotification(targetUser, project, "Você foi adicionado ao projeto " + project.getName() + " como " + request.role().name(), NotificationType.PROJECT_INVITE);
         
         return projectMapper.toMemberResponse(newMember);
     }

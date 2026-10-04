@@ -12,37 +12,38 @@ public class TaskSpecification {
 
     public static Specification<Task> buildFilters(Long projectId, String search, TaskStatus status, TaskPriority priority, Long assigneeId) {
         return (root, query, builder) -> {
-            var predicates = builder.conjunction();
+            java.util.List<jakarta.persistence.criteria.Predicate> predicates = new java.util.ArrayList<>();
 
             // Must belong to project
-            predicates.getExpressions().add(builder.equal(root.get("project").get("id"), projectId));
+            predicates.add(builder.equal(root.get("project").get("id"), projectId));
 
             if (search != null && !search.trim().isEmpty()) {
                 String pattern = "%" + search.toLowerCase() + "%";
                 var titlePredicate = builder.like(builder.lower(root.get("title")), pattern);
                 var descPredicate = builder.like(builder.lower(root.get("description")), pattern);
-                predicates.getExpressions().add(builder.or(titlePredicate, descPredicate));
+                predicates.add(builder.or(titlePredicate, descPredicate));
             }
 
             if (status != null) {
-                predicates.getExpressions().add(builder.equal(root.get("status"), status));
+                predicates.add(builder.equal(root.get("status"), status));
             }
 
             if (priority != null) {
-                predicates.getExpressions().add(builder.equal(root.get("priority"), priority));
+                predicates.add(builder.equal(root.get("priority"), priority));
             }
 
             if (assigneeId != null) {
-                predicates.getExpressions().add(builder.equal(root.get("assignee").get("id"), assigneeId));
+                predicates.add(builder.equal(root.get("assignee").get("id"), assigneeId));
             }
 
             // For fetching tags efficiently (avoid N+1) if it's not a count query
             if (query.getResultType() != Long.class && query.getResultType() != long.class) {
                 root.fetch("tags", JoinType.LEFT);
                 root.fetch("assignee", JoinType.LEFT);
+                query.distinct(true);
             }
 
-            return predicates;
+            return builder.and(predicates.toArray(new jakarta.persistence.criteria.Predicate[0]));
         };
     }
 }
