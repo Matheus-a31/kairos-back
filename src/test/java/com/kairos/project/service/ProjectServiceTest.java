@@ -13,6 +13,7 @@ import com.kairos.project.model.ProjectRole;
 import com.kairos.project.model.ProjectStatus;
 import com.kairos.project.repository.ProjectMemberRepository;
 import com.kairos.project.repository.ProjectRepository;
+import com.kairos.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,6 +42,8 @@ class ProjectServiceTest {
     private UserRepository userRepository;
     @Mock
     private ProjectMapper projectMapper;
+    @Mock
+    private NotificationService notificationService;
     @Mock
     private SecurityContext securityContext;
     @Mock
@@ -73,10 +76,10 @@ class ProjectServiceTest {
     @Test
     void createProject_ShouldSaveProjectAndAddCreatorAsManager() {
         mockCurrentUser();
-        ProjectRequest request = new ProjectRequest("My Project", "Description", LocalDate.now(), LocalDate.now().plusDays(10), ProjectStatus.PLANNING);
+        ProjectRequest request = new ProjectRequest("My Project", "Description", LocalDate.now(), LocalDate.now().plusDays(10), ProjectStatus.PLANNING, null);
         Project project = new Project();
         project.setName(request.name());
-        ProjectResponse response = new ProjectResponse(1L, "My Project", "Description", ProjectStatus.PLANNING, null, null);
+        ProjectResponse response = new ProjectResponse(1L, "My Project", "Description", ProjectStatus.PLANNING, null, null, null);
 
         when(projectMapper.toEntity(request)).thenReturn(project);
         when(projectRepository.save(any(Project.class))).thenReturn(project);
@@ -94,7 +97,7 @@ class ProjectServiceTest {
         mockCurrentUser();
         Project project = new Project();
         project.setName("Test");
-        ProjectResponse response = new ProjectResponse(1L, "Test", "Desc", ProjectStatus.PLANNING, null, null);
+        ProjectResponse response = new ProjectResponse(1L, "Test", "Desc", ProjectStatus.PLANNING, null, null, null);
 
         when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
         when(projectMemberRepository.existsByProjectIdAndUserId(1L, currentUser.getId())).thenReturn(true);

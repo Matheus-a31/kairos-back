@@ -57,8 +57,8 @@ class ProjectControllerTest {
 
     @Test
     void createProject_ShouldReturnCreated() throws Exception {
-        ProjectRequest request = new ProjectRequest("Proj", "Desc", LocalDate.now(), LocalDate.now().plusDays(10), ProjectStatus.PLANNING);
-        ProjectResponse response = new ProjectResponse(1L, "Proj", "Desc", ProjectStatus.PLANNING, LocalDate.now(), LocalDate.now().plusDays(10));
+        ProjectRequest request = new ProjectRequest("Proj", "Desc", LocalDate.now(), LocalDate.now().plusDays(10), ProjectStatus.PLANNING, null);
+        ProjectResponse response = new ProjectResponse(1L, "Proj", "Desc", ProjectStatus.PLANNING, LocalDate.now(), LocalDate.now().plusDays(10), null);
 
         when(projectService.createProject(any(ProjectRequest.class))).thenReturn(response);
 
@@ -72,7 +72,7 @@ class ProjectControllerTest {
 
     @Test
     void getProjects_ShouldReturnOk() throws Exception {
-        ProjectResponse response = new ProjectResponse(1L, "Proj", "Desc", ProjectStatus.PLANNING, LocalDate.now(), LocalDate.now().plusDays(10));
+        ProjectResponse response = new ProjectResponse(1L, "Proj", "Desc", ProjectStatus.PLANNING, LocalDate.now(), LocalDate.now().plusDays(10), null);
         Page<ProjectResponse> page = new PageImpl<>(List.of(response), PageRequest.of(0, 10), 1);
 
         when(projectService.getProjects(any(), any())).thenReturn(page);

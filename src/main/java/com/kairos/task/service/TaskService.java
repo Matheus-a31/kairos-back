@@ -13,6 +13,8 @@ import com.kairos.auth.model.User;
 import com.kairos.project.model.Project;
 import com.kairos.tag.model.Tag;
 import com.kairos.tag.repository.TagRepository;
+import com.kairos.notification.service.NotificationService;
+import com.kairos.notification.model.NotificationType;
 
 
 import com.kairos.task.dto.TaskRequest;
@@ -40,10 +42,12 @@ public class TaskService {
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final TaskMapper taskMapper;
+    private final NotificationService notificationService;
 
     public TaskService(TaskRepository taskRepository, TaskHistoryRepository taskHistoryRepository, 
                        ProjectRepository projectRepository, ProjectMemberRepository projectMemberRepository,
-                       UserRepository userRepository, TagRepository tagRepository, TaskMapper taskMapper) {
+                       UserRepository userRepository, TagRepository tagRepository, TaskMapper taskMapper,
+                       NotificationService notificationService) {
         this.taskRepository = taskRepository;
         this.taskHistoryRepository = taskHistoryRepository;
         this.projectRepository = projectRepository;
@@ -51,6 +55,7 @@ public class TaskService {
         this.userRepository = userRepository;
         this.tagRepository = tagRepository;
         this.taskMapper = taskMapper;
+        this.notificationService = notificationService;
     }
 
     private User getCurrentUser() {
@@ -84,6 +89,11 @@ public class TaskService {
         handleTags(projectId, request.tagIds(), task);
         
         task = taskRepository.save(task);
+        
+        if (task.getAssignee() != null) {
+            notificationService.createNotification(task.getAssignee(), project, "Você foi atribuído à tarefa: " + task.getTitle(), NotificationType.TASK_ASSIGNED);
+        }
+        
         return taskMapper.toResponse(task);
     }
 
@@ -99,10 +109,18 @@ public class TaskService {
         task.setPriority(request.priority());
         task.setDueDate(request.dueDate());
         
+        User oldAssignee = task.getAssignee();
+        
         handleAssignee(projectId, request.assigneeId(), task);
         handleTags(projectId, request.tagIds(), task);
         
-        return taskMapper.toResponse(taskRepository.save(task));
+        task = taskRepository.save(task);
+        
+        if (task.getAssignee() != null && (oldAssignee == null || !oldAssignee.getId().equals(task.getAssignee().getId()))) {
+            notificationService.createNotification(task.getAssignee(), task.getProject(), "Você foi atribuído à tarefa: " + task.getTitle(), NotificationType.TASK_ASSIGNED);
+        }
+        
+        return taskMapper.toResponse(task);
     }
     
     @Transactional
@@ -124,7 +142,13 @@ public class TaskService {
         TaskHistory history = new TaskHistory(task, currentUser, oldStatus, newStatus, comment);
         taskHistoryRepository.save(history);
         
-        return taskMapper.toResponse(taskRepository.save(task));
+        task = taskRepository.save(task);
+        
+        if (task.getAssignee() != null) {
+            notificationService.createNotification(task.getAssignee(), task.getProject(), "O status da tarefa '" + task.getTitle() + "' mudou para " + newStatus.name(), NotificationType.TASK_UPDATED);
+        }
+        
+        return taskMapper.toResponse(task);
     }
     
     @Transactional
