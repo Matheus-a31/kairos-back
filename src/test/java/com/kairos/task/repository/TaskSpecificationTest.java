@@ -71,9 +71,10 @@ class TaskSpecificationTest {
         TaskPriority priority = TaskPriority.HIGH;
         Long assigneeId = 2L;
 
-        // Mock builder conjunction
+        // Mock builder conjunction and and
         lenient().when(builder.conjunction()).thenReturn(conjunctionPredicate);
         lenient().when(conjunctionPredicate.getExpressions()).thenReturn(mock(java.util.List.class));
+        lenient().when(builder.and(any(Predicate[].class))).thenReturn(finalPredicate);
 
         // Mock project path
         lenient().when(root.get("project")).thenReturn(projectPath);
