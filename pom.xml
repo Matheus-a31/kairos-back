@@ -8,10 +8,10 @@
 		<version>4.1.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.kairos</groupId>
-	<artifactId>kairos</artifactId>
+	<groupId>com.prumo</groupId>
+	<artifactId>prumo</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>kairos</name>
+	<name>prumo</name>
 	<description>Gestão de Projetos e Tarefas</description>
 	<url/>
 	<licenses>

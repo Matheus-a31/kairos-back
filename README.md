@@ -62,11 +62,8 @@ Quando a aplicação estiver rodando localmente, você poderá acessar a documen
 ## Arquitetura e Domínios
 
 A estrutura está subdividida em pacotes seguindo um modelo orientado ao domínio (*Domain Driven Design*):
-- \`com.kairos.auth\`: Lógica de gerenciamento de Segurança, Login, Registro e JWT.
-- \`com.kairos.project\`: Entidades relacionadas ao projeto (projetos, membros e convites).
-- \`com.kairos.task\`: Gerenciamento de tarefas e quadros Kanban (colunas, tags).
-- \`com.kairos.core\`: Classes de serviço globais, tratamento genérico de erros e disparos de e-mail.
-
-## Licença
-
-Este projeto está licenciado sob a [GNU General Public License v3.0] (LICENSE).
+- \`com.prumo.auth\`: Lógica de gerenciamento de Segurança, Login, Registro e JWT.
+- \`com.prumo.project\`: Entidades relacionadas ao projeto (projetos, membros e convites).
+- \`com.prumo.task\`: Gerenciamento de tarefas e quadros Kanban (colunas, tags).
+- \`com.prumo.notification\`: Gerenciamento de notificações de tarefas e projetos.
+- \`com.prumo.core\`: Classes de serviço globais, tratamento genérico de erros e disparos de e-mail.
