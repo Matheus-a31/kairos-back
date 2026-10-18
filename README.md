@@ -1,6 +1,6 @@
-# Kairós - Backend (API)
+# Prumo - Backend (API)
 
-O **Kairós** é uma plataforma moderna e intuitiva de gerenciamento de projetos e tarefas baseada no modelo Kanban (semelhante ao Trello ou Jira). O sistema permite aos usuários criar projetos, convidar membros da equipe com diferentes níveis de acesso (Gerente, Desenvolvedor, Visualizador), organizar tarefas em colunas customizáveis, adicionar tags, definir prioridades e prazos, além de gerenciar todo o fluxo de trabalho de forma colaborativa e ágil.
+O **Prumo** é uma plataforma moderna e intuitiva de gerenciamento de projetos e tarefas baseada no modelo Kanban (semelhante ao Trello ou Jira). O sistema permite aos usuários criar projetos, convidar membros da equipe com diferentes níveis de acesso (Gerente, Desenvolvedor, Visualizador), organizar tarefas em colunas customizáveis, adicionar tags, definir prioridades e prazos, além de gerenciar todo o fluxo de trabalho de forma colaborativa e ágil.
 
 Este é o backend da aplicação, construído utilizando **Java 21**, **Spring Boot 3.4.1**, e banco de dados **PostgreSQL**. A API fornece toda a lógica de negócio, autenticação JWT, disparo de e-mails para convites e controle completo do Kanban.
 
