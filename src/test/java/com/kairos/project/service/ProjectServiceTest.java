@@ -13,6 +13,7 @@ import com.kairos.project.model.ProjectRole;
 import com.kairos.project.model.ProjectStatus;
 import com.kairos.project.repository.ProjectMemberRepository;
 import com.kairos.project.repository.ProjectRepository;
+import com.kairos.project.repository.KanbanColumnRepository;
 import com.kairos.notification.service.NotificationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,8 @@ class ProjectServiceTest {
     private ProjectRepository projectRepository;
     @Mock
     private ProjectMemberRepository projectMemberRepository;
+    @Mock
+    private KanbanColumnRepository kanbanColumnRepository;
     @Mock
     private UserRepository userRepository;
     @Mock
