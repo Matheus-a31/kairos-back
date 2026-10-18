@@ -32,15 +32,24 @@ public class TagController {
     }
 
     @PostMapping
-    @PreAuthorize("@projectSecurity.isManager(authentication, #projectId)")
+    @PreAuthorize("@projectSecurity.isMemberOrManager(authentication, #projectId)")
     public ResponseEntity<TagResponse> createTag(
             @PathVariable Long projectId,
             @Valid @RequestBody TagRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(tagService.createTag(projectId, request));
     }
 
+    @PutMapping("/{tagId}")
+    @PreAuthorize("@projectSecurity.isMemberOrManager(authentication, #projectId)")
+    public ResponseEntity<TagResponse> updateTag(
+            @PathVariable Long projectId,
+            @PathVariable Long tagId,
+            @Valid @RequestBody TagRequest request) {
+        return ResponseEntity.ok(tagService.updateTag(projectId, tagId, request));
+    }
+
     @DeleteMapping("/{tagId}")
-    @PreAuthorize("@projectSecurity.isManager(authentication, #projectId)")
+    @PreAuthorize("@projectSecurity.isMemberOrManager(authentication, #projectId)")
     public ResponseEntity<Void> deleteTag(@PathVariable Long projectId, @PathVariable Long tagId) {
         tagService.deleteTag(projectId, tagId);
         return ResponseEntity.noContent().build();

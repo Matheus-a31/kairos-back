@@ -91,6 +91,36 @@ class TagServiceTest {
     }
 
     @Test
+    void updateTag_ShouldUpdateAndReturnTag() {
+        TagRequest request = new TagRequest("Frontend V2", "#0F0");
+
+        when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
+        when(tagRepository.findByProjectIdAndName(1L, "Frontend V2")).thenReturn(Optional.empty());
+        when(tagRepository.save(any(Tag.class))).thenReturn(tag);
+
+        TagResponse response = tagService.updateTag(1L, 1L, request);
+
+        assertNotNull(response);
+        assertEquals("Frontend V2", response.name());
+        assertEquals("#0F0", response.color());
+    }
+
+    @Test
+    void updateTag_ShouldThrowException_WhenDuplicateNameOnOtherTag() {
+        Tag otherTag = new Tag(project, "Backend", "#F00");
+        ReflectionTestUtils.setField(otherTag, "id", 2L);
+
+        TagRequest request = new TagRequest("Backend", "#0F0");
+
+        when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
+        when(tagRepository.findByProjectIdAndName(1L, "Backend")).thenReturn(Optional.of(otherTag));
+
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class,
+                () -> tagService.updateTag(1L, 1L, request));
+        assertEquals("Já existe uma tag com este nome neste projeto", exception.getMessage());
+    }
+
+    @Test
     void deleteTag_ShouldDelete() {
         when(tagRepository.findById(1L)).thenReturn(Optional.of(tag));
 

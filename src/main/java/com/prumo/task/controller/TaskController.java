@@ -66,7 +66,7 @@ public class TaskController {
     }
 
     @DeleteMapping("/{taskId}")
-    @PreAuthorize("@projectSecurity.isManager(authentication, #projectId)")
+    @PreAuthorize("@projectSecurity.isMemberOrManager(authentication, #projectId)")
     public ResponseEntity<Void> deleteTask(@PathVariable Long projectId, @PathVariable Long taskId) {
         taskService.deleteTask(projectId, taskId);
         return ResponseEntity.noContent().build();
