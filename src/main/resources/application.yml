@@ -1,6 +1,6 @@
 spring:
   application:
-    name: kairos
+    name: prumo
   config:
     import: optional:file:.env[.properties]
   
@@ -39,6 +39,17 @@ springdoc:
   api-docs:
     path: /v3/api-docs
 
+prumo:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-expiration: ${ACCESS}
+    refresh-expiration: ${REFRESH}
+  sendgrid:
+    api-key: ${SENDGRID_API_KEY}
+    from-email: ${SENDGRID_FROM_EMAIL}
+    from-name: Prumo
+  frontend-url: ${FRONTEND_URL:http://localhost:4200}
+
 kairos:
   jwt:
     secret: ${JWT_SECRET}
@@ -47,5 +58,5 @@ kairos:
   sendgrid:
     api-key: ${SENDGRID_API_KEY}
     from-email: ${SENDGRID_FROM_EMAIL}
-    from-name: Kairos
+    from-name: Prumo
   frontend-url: ${FRONTEND_URL:http://localhost:4200}
