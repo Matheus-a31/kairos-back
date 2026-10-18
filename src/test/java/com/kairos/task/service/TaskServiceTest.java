@@ -6,6 +6,8 @@ import com.kairos.auth.repository.UserRepository;
 import com.kairos.project.model.Project;
 import com.kairos.project.repository.ProjectMemberRepository;
 import com.kairos.project.repository.ProjectRepository;
+import com.kairos.project.repository.KanbanColumnRepository;
+import com.kairos.project.model.ProjectRole;
 import com.kairos.tag.model.Tag;
 import com.kairos.tag.repository.TagRepository;
 import com.kairos.task.dto.TaskRequest;
@@ -53,6 +55,8 @@ class TaskServiceTest {
     private ProjectRepository projectRepository;
     @Mock
     private ProjectMemberRepository projectMemberRepository;
+    @Mock
+    private KanbanColumnRepository kanbanColumnRepository;
     @Mock
     private UserRepository userRepository;
     @Mock

@@ -1,8 +1,9 @@
 package com.kairos.task.model;
+
 import com.kairos.auth.model.User;
 import com.kairos.project.model.Project;
+import com.kairos.project.model.KanbanColumn;
 import com.kairos.tag.model.Tag;
-
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
@@ -25,6 +26,10 @@ public class Task {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     private User assignee;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kanban_column_id")
+    private KanbanColumn kanbanColumn;
 
     @Column(nullable = false)
     private String title;
@@ -80,6 +85,9 @@ public class Task {
     
     public User getAssignee() { return assignee; }
     public void setAssignee(User assignee) { this.assignee = assignee; }
+
+    public KanbanColumn getKanbanColumn() { return kanbanColumn; }
+    public void setKanbanColumn(KanbanColumn kanbanColumn) { this.kanbanColumn = kanbanColumn; }
     
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -102,5 +110,3 @@ public class Task {
     public Set<Tag> getTags() { return tags; }
     public void setTags(Set<Tag> tags) { this.tags = tags; }
 }
-
-

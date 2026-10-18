@@ -87,7 +87,7 @@ class TaskControllerTest {
     void changeStatus_ShouldReturnOk() throws Exception {
         TaskResponse response = new TaskResponse(1L, "Task 1", "Desc", TaskPriority.HIGH, TaskStatus.IN_PROGRESS, LocalDate.now(), 1L, "User", null, null, null);
         
-        when(taskService.changeStatus(eq(1L), eq(1L), eq(TaskStatus.IN_PROGRESS), any())).thenReturn(response);
+        when(taskService.changeStatus(eq(1L), eq(1L), eq(TaskStatus.IN_PROGRESS), any(), any())).thenReturn(response);
 
         String jsonRequest = "{\"status\":\"IN_PROGRESS\", \"comment\":\"Starting task\"}";
 
