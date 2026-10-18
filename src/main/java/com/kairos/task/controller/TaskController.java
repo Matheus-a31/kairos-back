@@ -1,10 +1,6 @@
 package com.kairos.task.controller;
-import com.kairos.task.model.Task;
+
 import com.kairos.task.dto.ChangeStatusRequest;
-import com.kairos.project.model.Project;
-import com.kairos.project.security.ProjectSecurity;
-
-
 import com.kairos.task.model.TaskPriority;
 import com.kairos.task.model.TaskStatus;
 import com.kairos.task.dto.TaskRequest;
@@ -65,8 +61,8 @@ public class TaskController {
     public ResponseEntity<TaskResponse> changeStatus(
             @PathVariable Long projectId,
             @PathVariable Long taskId,
-            @Valid @RequestBody com.kairos.task.dto.ChangeStatusRequest request) {
-        return ResponseEntity.ok(taskService.changeStatus(projectId, taskId, request.status(), request.comment()));
+            @Valid @RequestBody ChangeStatusRequest request) {
+        return ResponseEntity.ok(taskService.changeStatus(projectId, taskId, request.status(), request.columnId(), request.comment()));
     }
 
     @DeleteMapping("/{taskId}")
@@ -76,5 +72,3 @@ public class TaskController {
         return ResponseEntity.noContent().build();
     }
 }
-
-

@@ -1,6 +1,4 @@
 package com.kairos.task.mapper;
-import com.kairos.project.model.Project;
-
 
 import com.kairos.tag.model.Tag;
 import com.kairos.task.model.Task;
@@ -18,6 +16,7 @@ public interface TaskMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "assignee", ignore = true)
+    @Mapping(target = "kanbanColumn", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
@@ -26,7 +25,7 @@ public interface TaskMapper {
 
     @Mapping(source = "assignee.id", target = "assigneeId")
     @Mapping(source = "assignee.name", target = "assigneeName")
+    @Mapping(source = "kanbanColumn.id", target = "kanbanColumnId")
+    @Mapping(source = "kanbanColumn.name", target = "kanbanColumnName")
     TaskResponse toResponse(Task task);
 }
-
-
