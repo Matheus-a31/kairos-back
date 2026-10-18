@@ -73,6 +73,21 @@ class TagControllerTest {
     }
 
     @Test
+    void updateTag_ShouldReturnOk() throws Exception {
+        TagRequest request = new TagRequest("Backend Updated", "#0F0");
+        TagResponse response = new TagResponse(1L, "Backend Updated", "#0F0");
+
+        when(tagService.updateTag(eq(1L), eq(1L), any(TagRequest.class))).thenReturn(response);
+
+        mockMvc.perform(put("/api/projects/1/tags/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("Backend Updated"))
+                .andExpect(jsonPath("$.color").value("#0F0"));
+    }
+
+    @Test
     void deleteTag_ShouldReturnNoContent() throws Exception {
         mockMvc.perform(delete("/api/projects/1/tags/1"))
                 .andExpect(status().isNoContent());
