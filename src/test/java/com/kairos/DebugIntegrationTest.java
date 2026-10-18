@@ -13,8 +13,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.transaction.annotation.Transactional;
 
 @SpringBootTest
+@Transactional
 public class DebugIntegrationTest {
 
     @Autowired
@@ -32,11 +34,11 @@ public class DebugIntegrationTest {
     @Test
     @WithMockUser(username = "debug@example.com")
     public void testChangeStatus() {
-        User user = new User("Debug", "debug@example.com", "pass", Role.MANAGER);
-        user = userRepository.save(user);
+        User user = userRepository.findByEmail("debug@example.com")
+                .orElseGet(() -> userRepository.save(new User("Debug", "debug@example.com", "pass", Role.MANAGER)));
 
-        User assignee = new User("Assignee", "assignee@example.com", "pass", Role.MEMBER);
-        assignee = userRepository.save(assignee);
+        User assignee = userRepository.findByEmail("assignee@example.com")
+                .orElseGet(() -> userRepository.save(new User("Assignee", "assignee@example.com", "pass", Role.MEMBER)));
 
         Project project = new Project();
         project.setName("P1");
