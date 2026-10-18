@@ -122,12 +122,33 @@ public class TaskService {
         task.setPriority(request.priority());
         task.setDueDate(request.dueDate());
         
+        TaskStatus oldStatus = task.getStatus();
+        boolean statusChanged = (request.status() != null && request.status() != oldStatus);
+        if (statusChanged) {
+            task.setStatus(request.status());
+            if (kanbanColumnRepository != null) {
+                List<KanbanColumn> columns = kanbanColumnRepository.findByProjectIdOrderByPosition(projectId);
+                columns.stream()
+                        .filter(c -> deduceStatusFromColumn(c) == request.status())
+                        .findFirst()
+                        .ifPresent(task::setKanbanColumn);
+            }
+        }
+        
         User oldAssignee = task.getAssignee();
         
         handleAssignee(projectId, request.assigneeId(), task);
         handleTags(projectId, request.tagIds(), task);
         
         task = taskRepository.save(task);
+
+        if (statusChanged) {
+            User currentUser = getCurrentUser();
+            TaskHistory history = new TaskHistory(task, currentUser, oldStatus, task.getStatus(), "Status alterado via edição da tarefa");
+            taskHistoryRepository.save(history);
+            String destinationName = (task.getKanbanColumn() != null) ? task.getKanbanColumn().getName() : task.getStatus().name();
+            notifyProjectManagersAndAssignee(projectId, task, currentUser, destinationName);
+        }
         
         if (task.getAssignee() != null && (oldAssignee == null || !oldAssignee.getId().equals(task.getAssignee().getId()))) {
             notificationService.createNotification(task.getAssignee(), task.getProject(), "Você foi atribuído à tarefa: " + task.getTitle(), NotificationType.TASK_ASSIGNED);
