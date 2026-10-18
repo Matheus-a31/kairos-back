@@ -30,7 +30,12 @@ public class ProjectSecurity {
         Optional<User> userOpt = userRepository.findByEmail(authentication.getName());
         if (userOpt.isEmpty()) return false;
 
-        Optional<ProjectMember> memberOpt = projectMemberRepository.findByProjectIdAndUserId(projectId, userOpt.get().getId());
+        User user = userOpt.get();
+        if (user.getRole() == com.prumo.auth.model.Role.ADMIN || user.getRole() == com.prumo.auth.model.Role.MANAGER) {
+            return true;
+        }
+
+        Optional<ProjectMember> memberOpt = projectMemberRepository.findByProjectIdAndUserId(projectId, user.getId());
         return memberOpt.isPresent() && memberOpt.get().getRole() == ProjectRole.MANAGER;
     }
 
@@ -42,7 +47,12 @@ public class ProjectSecurity {
         Optional<User> userOpt = userRepository.findByEmail(authentication.getName());
         if (userOpt.isEmpty()) return false;
 
-        return projectMemberRepository.existsByProjectIdAndUserId(projectId, userOpt.get().getId());
+        User user = userOpt.get();
+        if (user.getRole() == com.prumo.auth.model.Role.ADMIN) {
+            return true;
+        }
+
+        return projectMemberRepository.existsByProjectIdAndUserId(projectId, user.getId());
     }
 
     public boolean isSelf(Authentication authentication, Long userId) {
