@@ -45,6 +45,26 @@ public class TagService {
     }
     
     @Transactional
+    public TagResponse updateTag(Long projectId, Long tagId, TagRequest request) {
+        Tag tag = tagRepository.findById(tagId)
+                .orElseThrow(() -> new ResourceNotFoundException("Tag não encontrada"));
+                
+        if (!tag.getProject().getId().equals(projectId)) {
+            throw new IllegalArgumentException("Tag não pertence a este projeto");
+        }
+
+        tagRepository.findByProjectIdAndName(projectId, request.name()).ifPresent(existing -> {
+            if (!existing.getId().equals(tagId)) {
+                throw new IllegalArgumentException("Já existe uma tag com este nome neste projeto");
+            }
+        });
+
+        tag.setName(request.name());
+        tag.setColor(request.color());
+        return toResponse(tagRepository.save(tag));
+    }
+
+    @Transactional
     public void deleteTag(Long projectId, Long tagId) {
         Tag tag = tagRepository.findById(tagId)
                 .orElseThrow(() -> new ResourceNotFoundException("Tag não encontrada"));
