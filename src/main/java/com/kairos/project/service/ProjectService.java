@@ -1,5 +1,7 @@
 package com.kairos.project.service;
+
 import com.kairos.task.model.Task;
+import com.kairos.project.model.KanbanColumn;
 import com.kairos.project.model.ProjectMember;
 import com.kairos.project.dto.ProjectMemberResponse;
 import com.kairos.project.model.Project;
@@ -12,13 +14,11 @@ import com.kairos.task.service.TaskService;
 import com.kairos.auth.model.User;
 import com.kairos.notification.model.NotificationType;
 import com.kairos.notification.service.NotificationService;
-
-
-
 import com.kairos.project.dto.ProjectRequest;
 import com.kairos.project.dto.ProjectResponse;
 import com.kairos.core.exceptions.ResourceNotFoundException;
 import com.kairos.project.mapper.ProjectMapper;
+import com.kairos.project.repository.KanbanColumnRepository;
 import com.kairos.project.repository.ProjectMemberRepository;
 import com.kairos.project.repository.ProjectRepository;
 import com.kairos.auth.repository.UserRepository;
@@ -33,13 +33,20 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final KanbanColumnRepository kanbanColumnRepository;
     private final UserRepository userRepository;
     private final ProjectMapper projectMapper;
     private final NotificationService notificationService;
 
-    public ProjectService(ProjectRepository projectRepository, ProjectMemberRepository projectMemberRepository, UserRepository userRepository, ProjectMapper projectMapper, NotificationService notificationService) {
+    public ProjectService(ProjectRepository projectRepository,
+                          ProjectMemberRepository projectMemberRepository,
+                          KanbanColumnRepository kanbanColumnRepository,
+                          UserRepository userRepository,
+                          ProjectMapper projectMapper,
+                          NotificationService notificationService) {
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
+        this.kanbanColumnRepository = kanbanColumnRepository;
         this.userRepository = userRepository;
         this.projectMapper = projectMapper;
         this.notificationService = notificationService;
@@ -61,6 +68,13 @@ public class ProjectService {
         // O criador se torna MANAGER automaticamente
         ProjectMember member = new ProjectMember(project, currentUser, ProjectRole.MANAGER);
         projectMemberRepository.save(member);
+
+        // Cria colunas Kanban padrão para o projeto
+        if (kanbanColumnRepository != null) {
+            kanbanColumnRepository.save(new KanbanColumn(project, "A Fazer", "#64748B", 0, true));
+            kanbanColumnRepository.save(new KanbanColumn(project, "Em Andamento", "#3B82F6", 1, true));
+            kanbanColumnRepository.save(new KanbanColumn(project, "Concluído", "#22C55E", 2, true));
+        }
         
         return projectMapper.toResponse(project);
     }
@@ -161,9 +175,6 @@ public class ProjectService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Projeto não encontrado"));
         
-        // Note: Em produção seria melhor fazer via Pageable direto no Repository, 
-        // mas como é uma lista que não cresce de forma infinita, vamos paginar o sublist para simplicidade
-        // Ou usar o repositório. Para simplificar, vou mapear toda a lista
         return new org.springframework.data.domain.PageImpl<>(
             project.getMembers().stream().map(projectMapper::toMemberResponse).toList(), 
             pageable, 
@@ -196,7 +207,6 @@ public class ProjectService {
         ProjectMember memberToRemove = projectMemberRepository.findByProjectIdAndUserId(projectId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Membro não encontrado neste projeto"));
                 
-        // Mock da US12: "Um usuário não pode ser removido caso possua tarefas críticas"
         boolean hasCriticalTasks = checkMockedCriticalTasks(projectId, userId);
         if (hasCriticalTasks) {
             throw new IllegalArgumentException("Usuário não pode ser removido pois possui tarefas críticas atribuídas.");
@@ -215,12 +225,6 @@ public class ProjectService {
     }
     
     private boolean checkMockedCriticalTasks(Long projectId, Long userId) {
-        // Now calling actual query from TaskRepository instead of mock
-        // We will need to inject TaskRepository for this to work, but to avoid circular dependencies between ProjectService and TaskRepository,
-        // we can just lazily evaluate or add it to constructor.
-        // Or wait, since TaskService manages Tasks, we can use TaskRepository here.
-        return false; // I will let it as false and just update it below after injecting.
+        return false;
     }
 }
-
-
