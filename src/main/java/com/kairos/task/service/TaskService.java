@@ -1,4 +1,5 @@
 package com.kairos.task.service;
+
 import com.kairos.task.model.Task;
 import com.kairos.task.model.TaskHistory;
 import com.kairos.task.model.TaskStatus;
@@ -6,17 +7,19 @@ import com.kairos.task.repository.TaskHistoryRepository;
 import com.kairos.task.repository.TaskRepository;
 import com.kairos.task.model.TaskPriority;
 import com.kairos.task.repository.TaskSpecification;
+import com.kairos.project.model.KanbanColumn;
+import com.kairos.project.model.Project;
+import com.kairos.project.model.ProjectMember;
+import com.kairos.project.model.ProjectRole;
+import com.kairos.project.repository.KanbanColumnRepository;
 import com.kairos.project.repository.ProjectMemberRepository;
 import com.kairos.project.repository.ProjectRepository;
 import com.kairos.auth.repository.UserRepository;
 import com.kairos.auth.model.User;
-import com.kairos.project.model.Project;
 import com.kairos.tag.model.Tag;
 import com.kairos.tag.repository.TagRepository;
 import com.kairos.notification.service.NotificationService;
 import com.kairos.notification.model.NotificationType;
-
-
 import com.kairos.task.dto.TaskRequest;
 import com.kairos.task.dto.TaskResponse;
 import com.kairos.core.exceptions.ResourceNotFoundException;
@@ -39,6 +42,7 @@ public class TaskService {
     private final TaskHistoryRepository taskHistoryRepository;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final KanbanColumnRepository kanbanColumnRepository;
     private final UserRepository userRepository;
     private final TagRepository tagRepository;
     private final TaskMapper taskMapper;
@@ -46,12 +50,14 @@ public class TaskService {
 
     public TaskService(TaskRepository taskRepository, TaskHistoryRepository taskHistoryRepository, 
                        ProjectRepository projectRepository, ProjectMemberRepository projectMemberRepository,
+                       KanbanColumnRepository kanbanColumnRepository,
                        UserRepository userRepository, TagRepository tagRepository, TaskMapper taskMapper,
                        NotificationService notificationService) {
         this.taskRepository = taskRepository;
         this.taskHistoryRepository = taskHistoryRepository;
         this.projectRepository = projectRepository;
         this.projectMemberRepository = projectMemberRepository;
+        this.kanbanColumnRepository = kanbanColumnRepository;
         this.userRepository = userRepository;
         this.tagRepository = tagRepository;
         this.taskMapper = taskMapper;
@@ -87,6 +93,13 @@ public class TaskService {
         
         handleAssignee(projectId, request.assigneeId(), task);
         handleTags(projectId, request.tagIds(), task);
+
+        if (kanbanColumnRepository != null) {
+            List<KanbanColumn> columns = kanbanColumnRepository.findByProjectIdOrderByPosition(projectId);
+            if (!columns.isEmpty()) {
+                task.setKanbanColumn(columns.get(0));
+            }
+        }
         
         task = taskRepository.save(task);
         
@@ -125,30 +138,93 @@ public class TaskService {
     
     @Transactional
     public TaskResponse changeStatus(Long projectId, Long taskId, TaskStatus newStatus, String comment) {
+        return changeStatus(projectId, taskId, newStatus, null, comment);
+    }
+
+    @Transactional
+    public TaskResponse changeStatus(Long projectId, Long taskId, TaskStatus newStatus, Long columnId, String comment) {
         Task task = taskRepository.findById(taskId).orElseThrow(() -> new ResourceNotFoundException("Tarefa não encontrada"));
         if (!task.getProject().getId().equals(projectId)) {
             throw new IllegalArgumentException("Tarefa não pertence a este projeto");
         }
-        
-        if (task.getStatus() == newStatus) {
-            return taskMapper.toResponse(task);
+
+        KanbanColumn column = null;
+        if (columnId != null && kanbanColumnRepository != null) {
+            column = kanbanColumnRepository.findById(columnId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Coluna não encontrada"));
+            if (!column.getProject().getId().equals(projectId)) {
+                throw new IllegalArgumentException("Coluna não pertence a este projeto");
+            }
+            if (newStatus == null) {
+                newStatus = deduceStatusFromColumn(column);
+            }
         }
         
         TaskStatus oldStatus = task.getStatus();
-        task.setStatus(newStatus);
+        KanbanColumn oldColumn = task.getKanbanColumn();
+
+        boolean statusChanged = (newStatus != null && task.getStatus() != newStatus);
+        boolean columnChanged = (column != null && (oldColumn == null || !oldColumn.getId().equals(column.getId())));
+
+        if (!statusChanged && !columnChanged) {
+            return taskMapper.toResponse(task);
+        }
+        
+        if (newStatus != null) {
+            task.setStatus(newStatus);
+        }
+        if (column != null) {
+            task.setKanbanColumn(column);
+        }
         
         // Log history
         User currentUser = getCurrentUser();
-        TaskHistory history = new TaskHistory(task, currentUser, oldStatus, newStatus, comment);
+        TaskHistory history = new TaskHistory(task, currentUser, oldStatus, task.getStatus(), comment);
         taskHistoryRepository.save(history);
         
         task = taskRepository.save(task);
-        
-        if (task.getAssignee() != null) {
-            notificationService.createNotification(task.getAssignee(), task.getProject(), "O status da tarefa '" + task.getTitle() + "' mudou para " + newStatus.name(), NotificationType.TASK_UPDATED);
-        }
+
+        // Notificações
+        String destinationName = (column != null) ? column.getName() : task.getStatus().name();
+        notifyProjectManagersAndAssignee(projectId, task, currentUser, destinationName);
         
         return taskMapper.toResponse(task);
+    }
+
+    private TaskStatus deduceStatusFromColumn(KanbanColumn column) {
+        String colName = column.getName().toLowerCase();
+        if (colName.contains("conclu") || colName.contains("done") || colName.contains("final")) {
+            return TaskStatus.DONE;
+        } else if (colName.contains("fazer") || colName.contains("todo") || colName.contains("backlog") || colName.contains("pendente") || column.getPosition() == 0) {
+            return TaskStatus.TODO;
+        } else {
+            return TaskStatus.IN_PROGRESS;
+        }
+    }
+
+    private void notifyProjectManagersAndAssignee(Long projectId, Task task, User currentUser, String destinationName) {
+        // Notifica gerentes do projeto (exceto o próprio usuário que alterou)
+        List<ProjectMember> managers = projectMemberRepository.findByProjectIdAndRole(projectId, ProjectRole.MANAGER);
+        for (ProjectMember managerMember : managers) {
+            if (!managerMember.getUser().getId().equals(currentUser.getId())) {
+                notificationService.createNotification(
+                    managerMember.getUser(),
+                    task.getProject(),
+                    "A tarefa '" + task.getTitle() + "' foi movida para " + destinationName + " por " + currentUser.getName(),
+                    NotificationType.TASK_UPDATED
+                );
+            }
+        }
+
+        // Notifica o responsável da tarefa (se existir e não for quem fez a alteração)
+        if (task.getAssignee() != null && !task.getAssignee().getId().equals(currentUser.getId())) {
+            notificationService.createNotification(
+                task.getAssignee(),
+                task.getProject(),
+                "A tarefa '" + task.getTitle() + "' atribuída a você foi movida para " + destinationName + " por " + currentUser.getName(),
+                NotificationType.TASK_UPDATED
+            );
+        }
     }
     
     @Transactional
@@ -184,5 +260,3 @@ public class TaskService {
         }
     }
 }
-
-
