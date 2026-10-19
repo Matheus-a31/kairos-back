@@ -48,7 +48,7 @@ public class ProjectSecurity {
         if (userOpt.isEmpty()) return false;
 
         User user = userOpt.get();
-        if (user.getRole() == com.prumo.auth.model.Role.ADMIN) {
+        if (user.getRole() == com.prumo.auth.model.Role.ADMIN || user.getRole() == com.prumo.auth.model.Role.MANAGER) {
             return true;
         }
 

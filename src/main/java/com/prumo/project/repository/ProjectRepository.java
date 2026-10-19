@@ -14,7 +14,19 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
     @Query("SELECT p FROM Project p JOIN p.members pm WHERE pm.user.id = :userId")
     Page<Project> findProjectsByUserId(@Param("userId") Long userId, Pageable pageable);
     
-    @Query("SELECT p FROM Project p JOIN p.members pm WHERE pm.user.id = :userId AND LOWER(p.name) LIKE LOWER(CONCAT('%', :name, '%'))")
+    @Query(value = """
+        SELECT p.* FROM projects p
+        JOIN project_members pm ON pm.project_id = p.id
+        WHERE pm.user_id = :userId
+          AND fts_project_match(p.name, p.description, :name) = true
+        """,
+        countQuery = """
+        SELECT COUNT(p.id) FROM projects p
+        JOIN project_members pm ON pm.project_id = p.id
+        WHERE pm.user_id = :userId
+          AND fts_project_match(p.name, p.description, :name) = true
+        """,
+        nativeQuery = true)
     Page<Project> findProjectsByUserIdAndName(@Param("userId") Long userId, @Param("name") String name, Pageable pageable);
 }
 
