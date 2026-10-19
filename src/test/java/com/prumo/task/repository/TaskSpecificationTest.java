@@ -83,14 +83,12 @@ class TaskSpecificationTest {
 
         // Mock search paths
         lenient().when(root.get("title")).thenReturn(titlePath);
-        lenient().when(builder.lower(any())).thenReturn(lowerTitleExpr);
-        lenient().when(builder.like(eq(lowerTitleExpr), anyString())).thenReturn(finalPredicate);
-
         lenient().when(root.get("description")).thenReturn(descPath);
-        lenient().when(builder.lower(any())).thenReturn(lowerDescExpr);
-        lenient().when(builder.like(eq(lowerDescExpr), anyString())).thenReturn(finalPredicate);
-
-        lenient().when(builder.or(any(), any())).thenReturn(finalPredicate);
+        @SuppressWarnings("unchecked")
+        Expression<Boolean> ftsExpr = (Expression<Boolean>) mock(Expression.class);
+        lenient().when(builder.literal(anyString())).thenReturn(mock(Expression.class));
+        lenient().when(builder.function(eq("fts_task_match"), eq(Boolean.class), any(), any(), any())).thenReturn(ftsExpr);
+        lenient().when(builder.isTrue(ftsExpr)).thenReturn(finalPredicate);
 
         // Mock status path
         lenient().when(root.get("status")).thenReturn(statusPath);

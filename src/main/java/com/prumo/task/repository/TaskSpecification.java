@@ -18,10 +18,10 @@ public class TaskSpecification {
             predicates.add(builder.equal(root.get("project").get("id"), projectId));
 
             if (search != null && !search.trim().isEmpty()) {
-                String pattern = "%" + search.toLowerCase() + "%";
-                var titlePredicate = builder.like(builder.lower(root.get("title")), pattern);
-                var descPredicate = builder.like(builder.lower(root.get("description")), pattern);
-                predicates.add(builder.or(titlePredicate, descPredicate));
+                var ftsPredicate = builder.isTrue(
+                    builder.function("fts_task_match", Boolean.class, root.get("title"), root.get("description"), builder.literal(search.trim()))
+                );
+                predicates.add(ftsPredicate);
             }
 
             if (status != null) {

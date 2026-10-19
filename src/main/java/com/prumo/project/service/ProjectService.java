@@ -1,6 +1,7 @@
 package com.prumo.project.service;
 
 import com.prumo.task.model.Task;
+import java.util.Optional;
 import com.prumo.project.model.KanbanColumn;
 import com.prumo.project.model.ProjectMember;
 import com.prumo.project.dto.ProjectMemberResponse;
@@ -154,11 +155,12 @@ public class ProjectService {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Projeto não encontrado"));
                 
-        ProjectMember member = projectMemberRepository.findByProjectIdAndUserId(id, currentUser.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Você não tem acesso a este projeto"));
-                
-        if (member.getRole() != ProjectRole.MANAGER) {
-            throw new IllegalArgumentException("Apenas o gerente do projeto pode excluí-lo");
+        boolean isSystemManager = currentUser.getRole() == com.prumo.auth.model.Role.ADMIN || currentUser.getRole() == com.prumo.auth.model.Role.MANAGER;
+        Optional<ProjectMember> memberOpt = projectMemberRepository.findByProjectIdAndUserId(id, currentUser.getId());
+        boolean isProjectManager = memberOpt.isPresent() && memberOpt.get().getRole() == ProjectRole.MANAGER;
+
+        if (!isSystemManager && !isProjectManager) {
+            throw new IllegalArgumentException("Apenas o gerente do projeto ou administrador pode excluí-lo");
         }
         
         if (project.getStatus() == ProjectStatus.COMPLETED) {

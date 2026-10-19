@@ -145,4 +145,69 @@ class ProjectServiceTest {
         assertNotNull(result);
         assertEquals("new@example.com", result.userEmail());
     }
+
+    @Test
+    void deleteProject_ShouldDelete_WhenCurrentUserIsSystemManager() {
+        mockCurrentUser();
+        Project project = new Project();
+        project.setStatus(ProjectStatus.IN_PROGRESS);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.findByProjectIdAndUserId(1L, currentUser.getId())).thenReturn(Optional.empty());
+
+        assertDoesNotThrow(() -> projectService.deleteProject(1L));
+        verify(projectRepository, times(1)).delete(project);
+    }
+
+    @Test
+    void deleteProject_ShouldDelete_WhenCurrentUserIsProjectManager() {
+        User memberUser = new User("Member", "member@example.com", "pass", Role.MEMBER);
+        ReflectionTestUtils_setId(memberUser, 2L);
+        when(authentication.getName()).thenReturn(memberUser.getEmail());
+        when(userRepository.findByEmail(memberUser.getEmail())).thenReturn(Optional.of(memberUser));
+
+        Project project = new Project();
+        project.setStatus(ProjectStatus.PLANNING);
+
+        ProjectMember member = new ProjectMember(project, memberUser, ProjectRole.MANAGER);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.findByProjectIdAndUserId(1L, memberUser.getId())).thenReturn(Optional.of(member));
+
+        assertDoesNotThrow(() -> projectService.deleteProject(1L));
+        verify(projectRepository, times(1)).delete(project);
+    }
+
+    @Test
+    void deleteProject_ShouldThrow_WhenProjectIsCompleted() {
+        mockCurrentUser();
+        Project project = new Project();
+        project.setStatus(ProjectStatus.COMPLETED);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> projectService.deleteProject(1L));
+        assertEquals("Projetos concluídos não podem ser excluídos", ex.getMessage());
+        verify(projectRepository, never()).delete(any());
+    }
+
+    @Test
+    void deleteProject_ShouldThrow_WhenUserIsNotManager() {
+        User regularUser = new User("User", "user@example.com", "pass", Role.MEMBER);
+        ReflectionTestUtils_setId(regularUser, 3L);
+        when(authentication.getName()).thenReturn(regularUser.getEmail());
+        when(userRepository.findByEmail(regularUser.getEmail())).thenReturn(Optional.of(regularUser));
+
+        Project project = new Project();
+        project.setStatus(ProjectStatus.IN_PROGRESS);
+
+        ProjectMember member = new ProjectMember(project, regularUser, ProjectRole.MEMBER);
+
+        when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
+        when(projectMemberRepository.findByProjectIdAndUserId(1L, regularUser.getId())).thenReturn(Optional.of(member));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> projectService.deleteProject(1L));
+        assertEquals("Apenas o gerente do projeto ou administrador pode excluí-lo", ex.getMessage());
+        verify(projectRepository, never()).delete(any());
+    }
 }
